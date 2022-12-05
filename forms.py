@@ -28,7 +28,3 @@ class AddFeedbackForm(FlaskForm):
 class EditFeedbackForm(FlaskForm):
     title = StringField('Title', validators=[Length(max=50)])
     content = TextAreaField('Content', validators=[Length(max=400)])
-
-
-class DeleteForm(FlaskForm):
-    user = StringField('User')

@@ -9,11 +9,7 @@
         <p>{{ field.label }} {{ field(class_="form-control") }}</p>
         {% endfor %}
         <button class="btn btn-success btn-sm">Save</button>
-        <button
-            formmethod="get"
-            formaction="/users/{{user}}"
-            class="btn btn-outline-danger btn-sm"
-        >
+        <button formmethod="get" formaction="/users/{{user}}" class="btn btn-outline-danger btn-sm">
             Cancel
         </button>
     </form>
