@@ -2,6 +2,7 @@ from flask import Flask, redirect, render_template, session, flash
 from flask_debugtoolbar import DebugToolbarExtension
 from forms import RegisterForm, LoginForm, AddFeedbackForm, EditFeedbackForm
 from models import User, connect_db, db, Feedback
+from werkzeug.exceptions import Unauthorized
 
 app = Flask(__name__)
 app.app_context().push()
@@ -24,6 +25,9 @@ def send_to_register():
 @app.route('/register', methods=['GET', 'POST'])
 def show_register_form():
 
+    if 'username' not in session:
+        return redirect(f"/users/{session['username']}")
+
     form = RegisterForm()
 
     if form.validate_on_submit():
@@ -37,9 +41,8 @@ def show_register_form():
         new_user = User.register(username=username, password=password,
                                  email=email, first_name=first_name, last_name=last_name)
 
-        session['username'] = new_user.username
-        db.session.add(new_user)
         db.session.commit()
+        session['username'] = new_user.username
 
         return redirect(f'/users/{new_user.username}')
 
@@ -49,6 +52,9 @@ def show_register_form():
 @app.route('/login', methods=['GET', 'POST'])
 def login_user():
     form = LoginForm()
+
+    if 'username' not in session:
+        return redirect(f"/users/{session['username']}")
 
     if form.validate_on_submit():
 
@@ -61,18 +67,22 @@ def login_user():
 
             flash(f'Welcome Back! {user.username}')
             session['username'] = user.username
-
             return redirect(f'/users/{user.username}')
 
         else:
             form.username.errors = ['INVALID USERNAME/PASSWORD']
+            session['username'] = user.username
 
     return render_template('login.html', form=form)
 
 
 @app.route('/users/<username>')
 def show_user(username):
+    if "username" not in session or username != session['username']:
+        raise Unauthorized()
+
     user = User.query.get_or_404(username)
+
     return render_template('show_user.html', user=user)
 
 
@@ -82,6 +92,9 @@ def add_feedback(username):
     form = AddFeedbackForm()
     user = User.query.get_or_404(username)
     feedback = user.feedback
+
+    if 'username' not in session or username != session['username']:
+        raise Unauthorized()
 
     if form.validate_on_submit():
         title = form.title.data
@@ -94,6 +107,7 @@ def add_feedback(username):
         db.session.commit()
 
         return redirect(f'/users/{user.username}')
+
     return render_template('feedback_form.html', form=form, user=user, feedback=feedback)
 
 
@@ -102,7 +116,10 @@ def edit_feedback(id):
 
     form = EditFeedbackForm()
     feedback = Feedback.query.get_or_404(id)
-    user = feedback.username
+    username = feedback.username
+
+    if 'username' not in session or username != session['username']:
+        raise Unauthorized()
 
     if form.validate_on_submit():
 
@@ -112,7 +129,7 @@ def edit_feedback(id):
 
         return redirect(f'/users/{feedback.username}')
 
-    return render_template('edit_feedback_form.html', form=form, user=user)
+    return render_template('edit_feedback_form.html', form=form, username=username)
 
 
 @app.route('/feedback/<int:id>/delete')
