@@ -25,7 +25,7 @@ def send_to_register():
 @app.route('/register', methods=['GET', 'POST'])
 def show_register_form():
 
-    if 'username' not in session:
+    if 'username' in session:
         return redirect(f"/users/{session['username']}")
 
     form = RegisterForm()
@@ -53,7 +53,7 @@ def show_register_form():
 def login_user():
     form = LoginForm()
 
-    if 'username' not in session:
+    if 'username' in session:
         return redirect(f"/users/{session['username']}")
 
     if form.validate_on_submit():
